@@ -23,18 +23,19 @@ folder_choice = st.sidebar.selectbox(
 
 # ----------------- Gmail Functions -----------------
 def get_gmail_service(credentials_json):
-    """Authenticate and return Gmail service."""
+    """Authenticate and return Gmail service, impersonating Entremotivator@gmail.com."""
     creds = service_account.Credentials.from_service_account_info(
         credentials_json,
-        scopes=['https://www.googleapis.com/auth/gmail.readonly']
+        scopes=['https://www.googleapis.com/auth/gmail.readonly'],
+        subject="Entremotivator@gmail.com"  # Force impersonation
     )
     return build('gmail', 'v1', credentials=creds)
 
 def get_emails(service, label_ids, max_results=10):
     """Fetch emails with given label IDs."""
     results = service.users().messages().list(
-        userId='me', 
-        labelIds=label_ids, 
+        userId='me',
+        labelIds=label_ids,
         maxResults=max_results
     ).execute()
 
@@ -43,15 +44,15 @@ def get_emails(service, label_ids, max_results=10):
 
     for msg in messages:
         msg_data = service.users().messages().get(
-            userId='me', 
-            id=msg['id'], 
-            format='metadata', 
+            userId='me',
+            id=msg['id'],
+            format='metadata',
             metadataHeaders=['From', 'Subject', 'Date']
         ).execute()
-        
+
         headers = {h['name']: h['value'] for h in msg_data['payload']['headers']}
         snippet = msg_data.get('snippet', '')
-        
+
         email_data.append({
             'From': headers.get('From', ''),
             'Subject': headers.get('Subject', '(No Subject)'),
